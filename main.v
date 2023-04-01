@@ -36,7 +36,7 @@ fn main() {
 	}
 	os.mkdir(output_dir)!
 
-	background_path := 'assets/Sertifikat_2339x1654.jpg'
+	background_path := 'assets/cert.jpg'
 	// load background image
 	img := image.load(background_path.str)
 
@@ -49,7 +49,11 @@ fn main() {
 	}
 
 	println('Compressing... (might take a few more minutes)')
-	compress_result := os.execute('7zz a -t7z -mx=9 -mfb=273 -ms -md=31 -myx=9 -mtm=- -mmt -mmtf -md=1536m -mmf=bt3 -mmc=10000 -mpb=0 -mlc=0 ${output_dir}.7z ${output_dir}')
+	mut command_7z := '7z'
+	$if macos {
+		command_7z = '7zz'
+	}
+	compress_result := os.execute('${command_7z} a -t7z -mx=9 -mfb=273 -ms -md=31 -myx=9 -mtm=- -mmt -mmtf -md=1536m -mmf=bt3 -mmc=10000 -mpb=0 -mlc=0 ${output_dir}.7z ${output_dir}')
 	if compress_result.exit_code == 0 {
 		println('Compression successful: Saved to ${output_name}.7z')
 	} else {
