@@ -44,7 +44,8 @@ fn main() {
 		img.w, img.h, u32(sdl.WindowFlags.hidden))
 
 	println('Rendering and exporting ${texts.len} certificates... (might take a few minutes)')
-	for name in texts {
+	for i := 0; i < texts.len; i++ {
+		name := texts[i]
 		render_image(window, img, font_data, name, '${output_dir}/${name}.jpg')
 	}
 
