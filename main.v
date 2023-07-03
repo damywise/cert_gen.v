@@ -6,6 +6,8 @@ import sdl.ttf
 import gx
 import os
 
+const premium = false
+
 fn main() {
 	os.signal_opt(.int, fn (_ os.Signal) {
 		exit(-1)
@@ -15,7 +17,7 @@ fn main() {
 
 	font_data := FontData{
 		fontsource: 'assets/fonts/ALS-Script.ttf'
-		fontsize: 148
+		fontsize: 300
 	}
 
 	source := 'names.txt'
@@ -36,7 +38,12 @@ fn main() {
 	}
 	os.mkdir(output_dir)!
 
-	background_path := 'assets/cert.jpg'
+	cert := {
+		'true':  'cert_premium'
+		'false': 'cert_normal'
+	}
+
+	background_path := 'assets/${cert[premium.str()]}.jpg'
 	// load background image
 	img := image.load(background_path.str)
 
@@ -114,7 +121,7 @@ fn render_image(window &sdl.Window, img &sdl.Surface, font_data FontData, text s
 fn render_text(renderer &sdl.Renderer, font_data FontData, text string) {
 	mut font := ttf.open_font(font_data.fontsource.str, font_data.fontsize)
 	ttf.set_font_hinting(font, int(ttf.hinting_normal))
-	color := gx.hex(0x38_24_1B_FF)
+	color := gx.hex(if premium { 0x00_00_00_FF } else { 0x38_24_1B_FF })
 
 	zw := 0
 	zh := 0
@@ -122,30 +129,30 @@ fn render_text(renderer &sdl.Renderer, font_data FontData, text string) {
 	text_width := 0
 	text_height := 0
 	ttf.size_text(font, text.str, &text_width, &text_height)
-	// println([text_width, text_height])
 
-	rectl := 187
-	rectr := 187
+	mut new_font_size := font_data.fontsize
+	text_max_height := 150
+	for text_height > text_max_height {
+		new_font_size -= 1
+		font = ttf.open_font(font_data.fontsource.str, new_font_size)
+		ttf.size_text(font, text.str, &text_width, &text_height)
+	}
+
+	left_margin := if premium { 300 } else { 187 }
+	right_margin := if premium { 300 } else { 187 }
+
 	// rectt := 800
 	// rectb := 691
-	rectw := 2339 - rectl - rectr
-	recth := 1654 - 800 - 691
+	img_wid := if premium { 2000 } else { 2339 }
+	// img_hei := if premium {1654} else {1414}
 
-	mut newrectw := text_width * recth / text_height
-	mut newrecth := recth
-	if newrectw > rectw {
-		newrectw = rectw
-		newrecth = text_height * rectw / text_width
-		// println([newrectw, newrecth])
+	text_max_width := img_wid - left_margin - right_margin
+	mut newrectw := text_width
+	mut newrecth := text_height
 
-		t_wid2 := 0
-		t_hei2 := 0
-		font = ttf.open_font(font_data.fontsource.str, newrecth - (text_height - font_data.fontsize))
-		ttf.size_text(font, text.str, &t_wid2, &t_hei2)
-
-		font = ttf.open_font(font_data.fontsource.str, newrecth - ((text_height - font_data.fontsize) * t_hei2 / font_data.fontsize) - 1)
-		ttf.size_text(font, text.str, &text_width, &text_height)
-		// println([text_width, text_height])
+	if newrectw > text_max_width {
+		newrecth = text_height * text_max_width / text_width
+		newrectw = text_width * newrecth / text_height
 	}
 
 	tsurf := ttf.render_text_blended(font, text.str, sdl.Color{
@@ -156,8 +163,10 @@ fn render_text(renderer &sdl.Renderer, font_data FontData, text string) {
 	})
 	ttext := sdl.create_texture_from_surface(renderer, tsurf)
 
+	top_margin := if premium { 660 } else { 840 } + (text_max_height - newrecth) / 2
+
 	sdl.query_texture(ttext, sdl.null, sdl.null, &zw, &zh)
-	dstrect := sdl.Rect{2339 / 2 - newrectw / 2, 1654 - 690 - newrecth, newrectw, newrecth}
+	dstrect := sdl.Rect{img_wid / 2 - newrectw / 2, top_margin, newrectw, newrecth}
 	sdl.render_copy(renderer, ttext, sdl.null, &dstrect)
 	sdl.destroy_texture(ttext)
 	sdl.free_surface(tsurf)
