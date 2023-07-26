@@ -17,7 +17,7 @@ fn main() {
 
 	font_data := FontData{
 		fontsource: 'assets/fonts/ALS-Script.ttf'
-		fontsize: 300
+		fontsize: 150
 	}
 
 	source := 'names.txt'
